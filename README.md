@@ -15,19 +15,49 @@ This application provides a user-friendly interface to explore and visualize FDA
 
 ## Getting Started
 
-1. Clone this repository
-2. Open `index.html` in your browser
-3. Explore the data!
+### Prerequisites
 
-For local development with live reload, you can use a simple HTTP server:
+- A modern web browser (Chrome, Firefox, Safari, or Edge)
+- Either:
+  - Python 3.x installed, or
+  - Node.js installed
 
-```bash
-# Using Python
-python -m http.server
+### Installation and Setup
 
-# Using Node.js
-npx serve
-```
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/homer6/food-contaminants.git
+   cd food-contaminants
+   ```
+
+2. Start a local development server:
+
+   **Using Python:**
+   ```bash
+   # Start server on default port 8000
+   python -m http.server
+   
+   # Or specify a port
+   python -m http.server 8080
+   ```
+
+   **Using Node.js:**
+   ```bash
+   # Install serve if you haven't already
+   npm install -g serve
+   
+   # Start server
+   serve
+   
+   # Or use npx without installing
+   npx serve
+   ```
+
+3. Open your browser and navigate to:
+   - Python server: http://localhost:8000
+   - Node.js serve: http://localhost:3000 (default)
+
+4. Explore the data!
 
 ## Data Source
 
