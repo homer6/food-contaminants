@@ -40,8 +40,10 @@ This is a purely client-side application with no backend dependencies. Python or
    
    Create and activate a virtual environment:
    ```bash
-   # Create a virtual environment
+   # Create a virtual environment (use python3 on macOS/Linux if python command is not found)
    python -m venv venv
+   # or
+   python3 -m venv venv
    
    # Activate the virtual environment
    # On macOS/Linux:
@@ -50,10 +52,12 @@ This is a purely client-side application with no backend dependencies. Python or
    venv\Scripts\activate
    ```
    
-   Start the server:
+   Start the server (this will run until you stop it with Ctrl+C):
    ```bash
    # Start server on default port 8000
    python -m http.server
+   # or
+   python3 -m http.server
    
    # Or specify a port
    python -m http.server 8080
@@ -64,18 +68,20 @@ This is a purely client-side application with no backend dependencies. Python or
    # Install serve if you haven't already
    npm install -g serve
    
-   # Start server
+   # Start server (this will run until you stop it with Ctrl+C)
    serve
    
    # Or use npx without installing
    npx serve
    ```
 
-4. Open your browser and navigate to:
+4. Open a new terminal window or browser tab and navigate to:
    - Python server: http://localhost:8000
    - Node.js serve: http://localhost:3000 (default)
 
 5. Explore the data!
+
+6. When you're done, return to the terminal and press Ctrl+C to stop the server.
 
 > **Note**: If you see an error like `Failed to load resource: net::ERR_FAILED` or `Access to fetch has been blocked by CORS policy`, it means you're trying to open the HTML file directly without using a web server.
 
