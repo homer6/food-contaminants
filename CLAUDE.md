@@ -44,6 +44,20 @@ If you're using Python 3.13 or newer, you may encounter a "No module named 'dist
    pip install setuptools
    ```
 
+#### Troubleshooting Visualization Issues:
+If you encounter issues with visualizations not displaying properly:
+
+1. Try the simplified version which focuses just on visualization:
+   ```bash
+   python simple_gradio_app.py
+   ```
+
+2. Common visualization issues and solutions:
+   - **Plotly version compatibility**: The app uses Plotly for charts - ensure version 5.18.0+ is installed
+   - **Empty data**: Check that the CSV file is correctly formatted and loaded
+   - **Browser compatibility**: Try a different browser if charts don't appear
+   - **Filter issues**: The full app has multi-select filters - try clearing all filters
+
 ### To serve the traditional web application:
 ```bash
 python -m http.server

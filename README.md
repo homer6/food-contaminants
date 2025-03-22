@@ -66,6 +66,17 @@ python3 gradio_app.py
 
 Open your browser and navigate to http://127.0.0.1:7860
 
+#### Troubleshooting Visualization Issues
+
+If you encounter any issues with visualizations not appearing in the full application:
+
+```bash
+# Run the simplified version to test basic visualization functionality
+python3 simple_gradio_app.py
+```
+
+The simple version provides a minimal interface with just a bar chart of the top 10 contaminants, which can help diagnose whether the issue is with the visualization library or with the filter logic in the full application.
+
 ### Option 2: Run the Traditional Web Application
 
 **IMPORTANT**: The traditional web application **cannot** be run by directly opening the HTML file in a browser due to CORS security restrictions. You **must** use a local web server.
