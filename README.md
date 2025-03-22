@@ -15,14 +15,14 @@ This application provides a user-friendly interface to explore and visualize FDA
 
 ## Getting Started
 
+We offer two versions of this application:
+1. A traditional web application using HTML/CSS/JavaScript
+2. A Gradio-based Python application with enhanced filtering and visualization
+
 ### Prerequisites
 
+- Python 3.7+ installed (required for the Gradio version)
 - A modern web browser (Chrome, Firefox, Safari, or Edge)
-- Either:
-  - Python 3.x installed, or
-  - Node.js installed
-
-This is a purely client-side application with no backend dependencies. Python or Node.js are only needed to run a local development server.
 
 ### Installation and Setup
 
@@ -32,13 +32,7 @@ This is a purely client-side application with no backend dependencies. Python or
    cd food-contaminants
    ```
 
-2. **IMPORTANT**: This application **cannot** be run by directly opening the HTML file in a browser due to CORS security restrictions. You **must** use a local web server.
-
-3. Set up a development environment:
-
-   **Using Python (recommended):**
-   
-   Create and activate a virtual environment:
+2. Create and activate a Python virtual environment:
    ```bash
    # Create a virtual environment (use python3 on macOS/Linux if python command is not found)
    python -m venv venv
@@ -51,37 +45,47 @@ This is a purely client-side application with no backend dependencies. Python or
    # On Windows:
    venv\Scripts\activate
    ```
-   
-   Start the server (this will run until you stop it with Ctrl+C):
+
+3. Install required dependencies:
    ```bash
-   # Start server on default port 8000
-   python -m http.server
-   # or
-   python3 -m http.server
-   
-   # Or specify a port
-   python -m http.server 8080
+   pip install -r requirements.txt
    ```
 
-   **Using Node.js:**
-   ```bash
-   # Install serve if you haven't already
-   npm install -g serve
-   
-   # Start server (this will run until you stop it with Ctrl+C)
-   serve
-   
-   # Or use npx without installing
-   npx serve
-   ```
+### Option 1: Run the Gradio Application (Recommended)
 
-4. Open a new terminal window or browser tab and navigate to:
-   - Python server: http://localhost:8000
-   - Node.js serve: http://localhost:3000 (default)
+The Gradio application provides an enhanced user interface with better filtering options and interactive visualizations.
 
-5. Explore the data!
+```bash
+# Make sure your virtual environment is activated
+python gradio_app.py
+# or
+python3 gradio_app.py
+```
 
-6. When you're done, return to the terminal and press Ctrl+C to stop the server.
+Open your browser and navigate to http://127.0.0.1:7860
+
+### Option 2: Run the Traditional Web Application
+
+**IMPORTANT**: The traditional web application **cannot** be run by directly opening the HTML file in a browser due to CORS security restrictions. You **must** use a local web server.
+
+Start a Python HTTP server (this will run until you stop it with Ctrl+C):
+```bash
+# Make sure your virtual environment is activated
+# Start server on default port 8000
+python -m http.server
+# or
+python3 -m http.server
+```
+
+Open your browser and navigate to http://localhost:8000
+
+### Using the Application
+
+1. Use the dropdown filters to narrow down results by contaminant, commodity, or level type
+2. Use the search box to search across all fields
+3. Click "Clear All Filters" to reset the view
+4. Examine the bar chart visualization to see contaminant distribution
+5. When you're done, return to the terminal and press Ctrl+C to stop the server
 
 > **Note**: If you see an error like `Failed to load resource: net::ERR_FAILED` or `Access to fetch has been blocked by CORS policy`, it means you're trying to open the HTML file directly without using a web server.
 
