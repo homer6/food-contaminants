@@ -1,3 +1,5 @@
+# It's recommended to upgrade to Gradio 4.x for better features and compatibility
+# To upgrade: pip install gradio>=4.0.0
 gradio>=3.41.0,<4.0.0
 pandas>=2.0.0
 matplotlib>=3.7.0

@@ -599,15 +599,30 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                         "heatmap",
                         "level_type_by_contaminant"
                     ],
-                    labels=[
-                        "Top Contaminants (Bar Chart)",
-                        "Top Commodities (Bar Chart)", 
-                        "Level Type Distribution (Pie Chart)",
-                        "Contaminant-Commodity Relationship (Heatmap)",
-                        "Level Type by Contaminant (Stacked Bars)"
-                    ],
+                    label="Chart Type",
                     value="contaminant_distribution"
                 )
+                
+                # Add label mapping for better user display
+                chart_labels = {
+                    "contaminant_distribution": "Top Contaminants (Bar Chart)",
+                    "commodity_distribution": "Top Commodities (Bar Chart)", 
+                    "level_type_distribution": "Level Type Distribution (Pie Chart)",
+                    "heatmap": "Contaminant-Commodity Relationship (Heatmap)",
+                    "level_type_by_contaminant": "Level Type by Contaminant (Stacked Bars)"
+                }
+                
+                gr.HTML(f"""
+                <div style="font-size: 0.9em; margin-top: -10px; margin-bottom: 10px; color: #666;">
+                  <ul style="padding-left: 20px; margin-top: 5px;">
+                    <li>{chart_labels["contaminant_distribution"]}</li>
+                    <li>{chart_labels["commodity_distribution"]}</li>
+                    <li>{chart_labels["level_type_distribution"]}</li>
+                    <li>{chart_labels["heatmap"]}</li>
+                    <li>{chart_labels["level_type_by_contaminant"]}</li>
+                  </ul>
+                </div>
+                """)
                 redraw_btn = gr.Button("Redraw Visualization")
             
             # Use Plot component to display matplotlib figure
@@ -670,14 +685,9 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
     
     # Special handler just for chart type
     chart_type.change(
-        create_visualization,  # Only update the visualization, not the whole interface
-        inputs=[
-            lambda contaminant, commodity, level_type, search_term, level_min, level_max, chart_type: 
-                filter_data(contaminant, commodity, level_type, search_term, level_min, level_max),
-            chart_type
-        ],
-        inputs_js=[all_inputs],  # Pass all inputs for JS processing
-        outputs=visualization
+        update_interface,  # Use the full update interface function instead
+        inputs=all_inputs,
+        outputs=all_outputs
     )
     
     # Add a redraw button for visualizations
