@@ -1,11 +1,17 @@
 import gradio as gr
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import numpy as np
 import os
 from datetime import datetime
+
+# Import Bokeh libraries
+from bokeh.plotting import figure
+from bokeh.models import ColumnDataSource, HoverTool, LinearColorMapper, ColorBar
+from bokeh.transform import factor_cmap
+from bokeh.palettes import Spectral10, Category10, Viridis256
+from bokeh.layouts import column
+from bokeh.embed import file_html
+from bokeh.resources import CDN
 
 # Set page configuration
 page_title = "FDA Food Contaminants Explorer"
@@ -247,163 +253,363 @@ def calculate_stats(filtered_df):
     
     return stats_html
 
-# Visualization Functions - each one as a separate function
+# Visualization Functions using Bokeh
 def create_contaminant_bar(filtered_df):
-    """Create a bar chart of top contaminants"""
+    """Create a bar chart of top contaminants using Bokeh"""
     counts = filtered_df['Contaminant'].value_counts().nlargest(15)
     
-    fig = go.Figure(data=[
-        go.Bar(
-            x=counts.index.tolist(),
-            y=counts.values.tolist(),
-            marker_color='rgb(55, 83, 109)'
-        )
-    ])
+    # Convert to DataFrame for Bokeh
+    data = pd.DataFrame({'contaminant': counts.index, 'count': counts.values})
     
-    fig.update_layout(
-        title='Top 15 Contaminants by Frequency',
-        xaxis=dict(title='Contaminant', tickangle=-45),
-        yaxis=dict(title='Count'),
-        height=500
+    # Create a ColumnDataSource
+    source = ColumnDataSource(data)
+    
+    # Create the figure
+    p = figure(
+        title="Top 15 Contaminants by Frequency",
+        x_range=data['contaminant'].tolist(),  # Use as categorical range
+        height=500,
+        width=700,
+        toolbar_location="right",
+        tools="pan,wheel_zoom,box_zoom,reset,save"
     )
-    return fig
+    
+    # Add bars
+    p.vbar(
+        x='contaminant',
+        top='count',
+        width=0.9,
+        source=source,
+        fill_color="#1f77b4",
+        line_color="#1f77b4"
+    )
+    
+    # Add hover tooltip
+    hover = HoverTool()
+    hover.tooltips = [
+        ("Contaminant", "@contaminant"),
+        ("Count", "@count")
+    ]
+    p.add_tools(hover)
+    
+    # Style the chart
+    p.xaxis.major_label_orientation = 3.14/4  # ~45 degrees
+    p.xgrid.grid_line_color = None
+    p.y_range.start = 0
+    p.title.text_font_size = "16px"
+    
+    return p
 
 def create_commodity_bar(filtered_df):
-    """Create a bar chart of top commodities"""
+    """Create a bar chart of top commodities using Bokeh"""
     counts = filtered_df['Commodity'].value_counts().nlargest(15)
     
-    fig = go.Figure(data=[
-        go.Bar(
-            x=counts.index.tolist(),
-            y=counts.values.tolist(),
-            marker_color='rgb(67, 160, 71)'
-        )
-    ])
+    # Convert to DataFrame for Bokeh
+    data = pd.DataFrame({'commodity': counts.index, 'count': counts.values})
     
-    fig.update_layout(
-        title='Top 15 Commodities by Frequency',
-        xaxis=dict(title='Commodity', tickangle=-45),
-        yaxis=dict(title='Count'),
-        height=500
+    # Create a ColumnDataSource
+    source = ColumnDataSource(data)
+    
+    # Create the figure
+    p = figure(
+        title="Top 15 Commodities by Frequency",
+        x_range=data['commodity'].tolist(),  # Use as categorical range
+        height=500,
+        width=700,
+        toolbar_location="right",
+        tools="pan,wheel_zoom,box_zoom,reset,save"
     )
-    return fig
+    
+    # Add bars
+    p.vbar(
+        x='commodity',
+        top='count',
+        width=0.9,
+        source=source,
+        fill_color="#2ca02c",  # Green
+        line_color="#2ca02c"
+    )
+    
+    # Add hover tooltip
+    hover = HoverTool()
+    hover.tooltips = [
+        ("Commodity", "@commodity"),
+        ("Count", "@count")
+    ]
+    p.add_tools(hover)
+    
+    # Style the chart
+    p.xaxis.major_label_orientation = 3.14/4  # ~45 degrees
+    p.xgrid.grid_line_color = None
+    p.y_range.start = 0
+    p.title.text_font_size = "16px"
+    
+    return p
 
 def create_level_type_pie(filtered_df):
-    """Create a pie chart of level types"""
+    """Create a pie chart of level types using Bokeh"""
+    # Bokeh doesn't have a built-in pie chart, so we need to create one manually
+    
     counts = filtered_df['Contaminant Level Type'].value_counts()
     
-    fig = go.Figure(data=[
-        go.Pie(
-            labels=counts.index.tolist(),
-            values=counts.values.tolist(),
-            hole=0.3
-        )
-    ])
+    # Convert to DataFrame for Bokeh
+    data = pd.DataFrame({
+        'level_type': counts.index, 
+        'count': counts.values,
+        'angle': counts.values / counts.values.sum() * 2 * np.pi,
+        'color': Category10[len(counts) if len(counts) <= 10 else 10][:len(counts)]
+    })
     
-    fig.update_layout(
-        title='Distribution of Contaminant Level Types',
-        height=500
+    # Create a ColumnDataSource
+    source = ColumnDataSource(data)
+    
+    # Create the figure
+    p = figure(
+        title="Distribution of Contaminant Level Types",
+        height=500,
+        width=700,
+        toolbar_location="right",
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        x_range=(-0.5, 1.0)  # Center the pie
     )
-    return fig
+    
+    # Add wedges
+    p.wedge(
+        x=0, y=0,
+        radius=0.4,
+        start_angle=0,
+        end_angle='angle',
+        line_color="white",
+        fill_color='color',
+        source=source,
+        legend_field='level_type'
+    )
+    
+    # Add hover tooltip
+    hover = HoverTool()
+    hover.tooltips = [
+        ("Level Type", "@level_type"),
+        ("Count", "@count"),
+        ("Percentage", "@angle{0.0%}")  # Format as percentage
+    ]
+    hover.formatters = {"@angle": "printf"}
+    p.add_tools(hover)
+    
+    # Style the chart
+    p.axis.visible = False
+    p.grid.grid_line_color = None
+    p.legend.location = "center_right"
+    p.title.text_font_size = "16px"
+    
+    return p
 
 def create_heatmap(filtered_df):
-    """Create a heatmap of contaminants vs commodities"""
+    """Create a heatmap of contaminants vs commodities using Bokeh"""
     top_contaminants = filtered_df['Contaminant'].value_counts().nlargest(10).index.tolist()
     top_commodities = filtered_df['Commodity'].value_counts().nlargest(10).index.tolist()
     
-    # Create a simple matrix for the heatmap
+    # Create a matrix for the heatmap
     matrix = np.zeros((len(top_contaminants), len(top_commodities)))
     
     # Fill in the matrix
     for i, contaminant in enumerate(top_contaminants):
         for j, commodity in enumerate(top_commodities):
             count = len(filtered_df[(filtered_df['Contaminant'] == contaminant) & 
-                                   (filtered_df['Commodity'] == commodity)])
+                                    (filtered_df['Commodity'] == commodity)])
             matrix[i, j] = count
     
-    fig = go.Figure(data=go.Heatmap(
-        z=matrix,
-        x=top_commodities,
-        y=top_contaminants,
-        colorscale='Viridis'
-    ))
+    # Create a DataFrame
+    heatmap_data = []
+    for i, contaminant in enumerate(top_contaminants):
+        for j, commodity in enumerate(top_commodities):
+            heatmap_data.append({
+                'contaminant': contaminant,
+                'commodity': commodity,
+                'count': matrix[i, j]
+            })
     
-    fig.update_layout(
-        title='Heatmap of Top Contaminants vs Top Commodities',
-        xaxis=dict(title='Commodity', tickangle=-45),
-        yaxis=dict(title='Contaminant'),
-        height=600
+    heatmap_df = pd.DataFrame(heatmap_data)
+    
+    # Create a ColumnDataSource
+    source = ColumnDataSource(heatmap_df)
+    
+    # Create a color mapper
+    max_count = heatmap_df['count'].max()
+    mapper = LinearColorMapper(palette=Viridis256, low=0, high=max_count)
+    
+    # Create the figure
+    p = figure(
+        title="Heatmap of Top Contaminants vs Top Commodities",
+        x_range=top_commodities,
+        y_range=list(reversed(top_contaminants)),  # Reverse for better display
+        height=600,
+        width=700,
+        toolbar_location="right",
+        tools="pan,wheel_zoom,box_zoom,reset,save"
     )
-    return fig
+    
+    # Add rectangles for heatmap
+    p.rect(
+        x='commodity', 
+        y='contaminant',
+        width=1, 
+        height=1,
+        source=source,
+        fill_color={'field': 'count', 'transform': mapper},
+        line_color=None
+    )
+    
+    # Add color bar
+    color_bar = ColorBar(
+        color_mapper=mapper, 
+        location=(0, 0),
+        title="Count"
+    )
+    p.add_layout(color_bar, 'right')
+    
+    # Add hover tooltip
+    hover = HoverTool()
+    hover.tooltips = [
+        ("Contaminant", "@contaminant"),
+        ("Commodity", "@commodity"),
+        ("Count", "@count")
+    ]
+    p.add_tools(hover)
+    
+    # Style the chart
+    p.xaxis.major_label_orientation = 3.14/4  # ~45 degrees
+    p.grid.grid_line_color = None
+    p.title.text_font_size = "16px"
+    
+    return p
 
 def create_stacked_bar(filtered_df):
-    """Create a stacked bar chart of level types by contaminant"""
+    """Create a stacked bar chart of level types by contaminant using Bokeh"""
     top_contaminants = filtered_df['Contaminant'].value_counts().nlargest(10).index.tolist()
     level_types = filtered_df['Contaminant Level Type'].unique().tolist()
     
-    # Create a simple figure
-    fig = go.Figure()
+    # Prepare data
+    data = pd.DataFrame(index=top_contaminants)
     
-    # Add a trace for each level type
+    # Add columns for each level type
     for level_type in level_types:
-        y_values = []
+        counts = []
         for contaminant in top_contaminants:
             count = len(filtered_df[(filtered_df['Contaminant'] == contaminant) & 
                                    (filtered_df['Contaminant Level Type'] == level_type)])
-            y_values.append(count)
-        
-        fig.add_trace(go.Bar(
-            name=level_type,
-            x=top_contaminants,
-            y=y_values
-        ))
+            counts.append(count)
+        data[level_type] = counts
     
-    fig.update_layout(
-        title='Contaminant Level Types by Top 10 Contaminants',
-        xaxis=dict(title='Contaminant', tickangle=-45),
-        yaxis=dict(title='Count'),
-        barmode='stack',
-        height=500
+    # Reset index to make contaminant a column
+    data = data.reset_index().rename(columns={'index': 'contaminant'})
+    
+    # Create a ColumnDataSource
+    source = ColumnDataSource(data)
+    
+    # Create the figure
+    p = figure(
+        title="Contaminant Level Types by Top 10 Contaminants",
+        x_range=top_contaminants,
+        height=500,
+        width=700,
+        toolbar_location="right",
+        tools="pan,wheel_zoom,box_zoom,reset,save"
     )
-    return fig
+    
+    # Add stacked bars
+    colors = Category10[len(level_types) if len(level_types) <= 10 else 10]
+    
+    # For stacked bars, we track the previous level's top position
+    previous = np.zeros(len(top_contaminants))
+    
+    for i, level_type in enumerate(level_types):
+        p.vbar(
+            x='contaminant',
+            top=level_type,
+            bottom=previous,
+            width=0.9,
+            source=source,
+            fill_color=colors[i % len(colors)],
+            line_color="white",
+            legend_label=level_type
+        )
+        
+        # Add current level values to previous for the next series
+        previous += np.array(data[level_type])
+    
+    # Add hover tooltip
+    hover = HoverTool()
+    hover.tooltips = [
+        ("Contaminant", "@contaminant"),
+    ] + [(level_type, f"@{{{level_type}}}") for level_type in level_types]
+    
+    p.add_tools(hover)
+    
+    # Style the chart
+    p.xaxis.major_label_orientation = 3.14/4  # ~45 degrees
+    p.xgrid.grid_line_color = None
+    p.y_range.start = 0
+    p.title.text_font_size = "16px"
+    p.legend.location = "top_right"
+    
+    return p
 
 def create_empty_figure(message="No data available for visualization"):
-    """Create an empty figure with an error message"""
-    fig = go.Figure()
-    fig.add_annotation(
-        text=message,
-        xref="paper", yref="paper",
-        x=0.5, y=0.5, showarrow=False,
-        font=dict(size=16)
+    """Create an empty figure with a message"""
+    p = figure(
+        title="No Data",
+        x_range=[0, 1],
+        y_range=[0, 1],
+        height=400,
+        width=700
     )
-    fig.update_layout(height=400)
-    return fig
+    
+    # Add the message
+    p.text(
+        x=0.5, y=0.5,
+        text=[message],
+        text_align="center",
+        text_baseline="middle",
+        text_font_size="16px"
+    )
+    
+    # Hide axes and grid
+    p.axis.visible = False
+    p.grid.grid_line_color = None
+    
+    return p
 
 # Main visualization function
 def create_visualization(filtered_df, chart_type):
     """Create a visualization based on the selected chart type"""
-    # Handle empty data
-    if filtered_df.empty:
-        return create_empty_figure()
-
-    # Use try block to catch any errors
     try:
+        # Handle empty data
+        if filtered_df.empty:
+            fig = create_empty_figure()
+            return file_html(fig, CDN)
+            
+        # Create the appropriate visualization based on the chart type
         if chart_type == "contaminant_distribution":
-            return create_contaminant_bar(filtered_df)
+            fig = create_contaminant_bar(filtered_df)
         elif chart_type == "commodity_distribution":
-            return create_commodity_bar(filtered_df)
+            fig = create_commodity_bar(filtered_df)
         elif chart_type == "level_type_distribution":
-            return create_level_type_pie(filtered_df)
+            fig = create_level_type_pie(filtered_df)
         elif chart_type == "heatmap":
-            return create_heatmap(filtered_df)
+            fig = create_heatmap(filtered_df)
         elif chart_type == "level_type_by_contaminant":
-            return create_stacked_bar(filtered_df)
+            fig = create_stacked_bar(filtered_df)
         else:
-            # Default to contaminant bar
-            return create_contaminant_bar(filtered_df)
+            # Default to contaminant bar if unknown chart type
+            fig = create_contaminant_bar(filtered_df)
+        
+        # Convert Bokeh figure to HTML and return
+        return file_html(fig, CDN)
+        
     except Exception as e:
-        print(f"Error creating visualization: {e}")
-        return create_empty_figure(f"Error creating visualization: {str(e)}")
+        print(f"Error creating visualization: {str(e)}")
+        fig = create_empty_figure(f"Error creating visualization: {str(e)}")
+        return file_html(fig, CDN)
 
 # Main interface update function
 def update_interface(contaminant, commodity, level_type, search_term, level_min, level_max, chart_type):
@@ -414,12 +620,11 @@ def update_interface(contaminant, commodity, level_type, search_term, level_min,
     # Calculate stats
     stats_html = calculate_stats(filtered_df)
     
-    # Create visualization
-    fig = create_visualization(filtered_df, chart_type)
+    # Create visualization as HTML
+    viz_html = create_visualization(filtered_df, chart_type)
     
     # Prepare the table data
     if filtered_df.empty:
-        table_data = [["No data found matching your filters"] + [""] * 5]
         table_df = pd.DataFrame({
             "Contaminant": [],
             "Commodity": [],
@@ -440,9 +645,6 @@ def update_interface(contaminant, commodity, level_type, search_term, level_min,
         table_df = table_df[['Contaminant', 'Commodity', 'Level Type', 'Level', 'Reference', 'Link']]
         if len(table_df) > 1000:
             table_df = table_df.head(1000)
-            records_limited = True
-        else:
-            records_limited = False
     
     # Add warning message if results were limited
     if len(filtered_df) > 1000:
@@ -450,20 +652,12 @@ def update_interface(contaminant, commodity, level_type, search_term, level_min,
     else:
         records_message = f"Showing all {len(filtered_df)} matching records"
     
-    return stats_html, fig, table_df, records_message
+    return stats_html, viz_html, table_df, records_message
 
 def clear_filters():
     """Reset all filters to their default values"""
-    # Use empty lists for multi-select dropdowns instead of None
     empty_filter_result = update_interface([], [], [], "", None, None, "contaminant_distribution")
     return [], [], [], "", None, None, "contaminant_distribution", empty_filter_result
-
-# Direct chart update function - bypasses the filters
-def update_chart_only(chart_type, contaminant, commodity, level_type, search_term, level_min, level_max):
-    """Update only the chart based on the selected chart type"""
-    filtered_df = filter_data(contaminant, commodity, level_type, search_term, level_min, level_max)
-    fig = create_visualization(filtered_df, chart_type)
-    return fig
 
 # Build the Gradio interface
 with gr.Blocks(css=custom_css, title=page_title) as demo:
@@ -486,7 +680,7 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                     choices=contaminant_options,
                     label="Contaminant",
                     value=[],
-                    multiselect=True,  # Allow selecting multiple contaminants
+                    multiselect=True,
                     elem_id="contaminant-filter"
                 )
                 
@@ -494,7 +688,7 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                     choices=commodity_options,
                     label="Commodity",
                     value=[],
-                    multiselect=True,  # Allow selecting multiple commodities
+                    multiselect=True,
                     elem_id="commodity-filter"
                 )
                 
@@ -502,7 +696,7 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                     choices=level_type_options,
                     label="Level Type",
                     value=[],
-                    multiselect=True,  # Allow selecting multiple level types
+                    multiselect=True,
                     elem_id="level-type-filter"
                 )
                 
@@ -542,8 +736,8 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                 label="Visualization Type"
             )
             
-            # Visualization plot
-            visualization = gr.Plot(elem_classes=["chart-container"])
+            # Use HTML component to display Bokeh visualization
+            visualization = gr.HTML(elem_classes=["chart-container"])
             
             records_message = gr.Markdown(elem_classes=["records-message"])
             
@@ -571,56 +765,49 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
     </div>
     """)
     
-    # Filter inputs for event handlers
-    filter_inputs = [
+    # All inputs needed for update_interface
+    all_inputs = [
         contaminant_dropdown, 
         commodity_dropdown, 
         level_type_dropdown, 
         search_input, 
         level_min, 
-        level_max
+        level_max,
+        chart_type
     ]
     
-    # Outputs for the update_interface function
-    filter_outputs = [
+    # All outputs from update_interface
+    all_outputs = [
         stats_html,
         visualization, 
         data_table,
         records_message
     ]
     
-    # Handle filter changes
-    def on_filter_change(*args):
-        active_chart_type = args[-1]  # Last argument is chart_type
-        filter_values = args[:-1]  # All other arguments are filter values
-        return update_interface(*filter_values, active_chart_type)
+    # Set up the events
     
-    # Set up change events for filters
-    for input_component in filter_inputs:
-        input_component.change(
-            on_filter_change,
-            inputs=filter_inputs + [chart_type],
-            outputs=filter_outputs
+    # When filters change
+    def on_any_change(*args):
+        return update_interface(*args)
+    
+    # Any component change triggers full update
+    for component in all_inputs:
+        component.change(
+            on_any_change,
+            inputs=all_inputs,
+            outputs=all_outputs
         )
-    
-    # IMPORTANT: Special handler for chart type changes
-    chart_type.change(
-        # When chart type changes, we need to redraw the visualization with the existing filters
-        update_chart_only,
-        inputs=[chart_type] + filter_inputs,
-        outputs=visualization
-    )
     
     # Clear button handler
     clear_btn.click(
         clear_filters,
-        outputs=filter_inputs + [chart_type] + filter_outputs
+        outputs=all_inputs + all_outputs
     )
     
     # Initialize the interface with default values
     demo.load(
         lambda: update_interface([], [], [], "", None, None, "contaminant_distribution"),
-        outputs=filter_outputs
+        outputs=all_outputs
     )
 
 # Launch the app
