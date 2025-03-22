@@ -250,6 +250,29 @@ def calculate_stats(filtered_df):
 # Create visualizations
 def create_visualizations(filtered_df, chart_type):
     """Create different types of visualizations based on the filtered data"""
+    # Debug information
+    print(f"Creating visualization with {len(filtered_df)} rows of data")
+    print(f"Chart type: {chart_type}")
+    
+    # Create a basic bar chart if something fails
+    def create_simple_bar():
+        counts = filtered_df['Contaminant'].value_counts().nlargest(10)
+        fig = go.Figure(data=[
+            go.Bar(
+                x=counts.index.tolist(),
+                y=counts.values.tolist(),
+                marker_color='rgb(55, 83, 109)'
+            )
+        ])
+        fig.update_layout(
+            title='Top 10 Contaminants',
+            xaxis=dict(title='Contaminant'),
+            yaxis=dict(title='Count'),
+            height=500
+        )
+        return fig
+    
+    # If no data, return empty figure with message
     if filtered_df.empty:
         fig = go.Figure()
         fig.add_annotation(text="No data available for visualization",
@@ -259,127 +282,130 @@ def create_visualizations(filtered_df, chart_type):
         fig.update_layout(height=400)
         return fig
     
-    if chart_type == "contaminant_distribution":
-        # Contaminant distribution chart
-        contaminant_counts = filtered_df['Contaminant'].value_counts().reset_index()
-        contaminant_counts.columns = ['Contaminant', 'Count']
-        contaminant_counts = contaminant_counts.sort_values('Count', ascending=False).head(15)
+    # Use try-except to catch any issues
+    try:
+        if chart_type == "contaminant_distribution":
+            # Simplified contaminant distribution chart using go.Figure
+            counts = filtered_df['Contaminant'].value_counts().nlargest(15)
+            
+            fig = go.Figure(data=[
+                go.Bar(
+                    x=counts.index.tolist(),
+                    y=counts.values.tolist(),
+                    marker_color='rgb(55, 83, 109)'
+                )
+            ])
+            
+            fig.update_layout(
+                title='Top 15 Contaminants by Frequency',
+                xaxis=dict(title='Contaminant', tickangle=-45),
+                yaxis=dict(title='Count'),
+                height=500
+            )
+            
+        elif chart_type == "commodity_distribution":
+            # Simplified commodity distribution chart
+            counts = filtered_df['Commodity'].value_counts().nlargest(15)
+            
+            fig = go.Figure(data=[
+                go.Bar(
+                    x=counts.index.tolist(),
+                    y=counts.values.tolist(),
+                    marker_color='rgb(67, 160, 71)'
+                )
+            ])
+            
+            fig.update_layout(
+                title='Top 15 Commodities by Frequency',
+                xaxis=dict(title='Commodity', tickangle=-45),
+                yaxis=dict(title='Count'),
+                height=500
+            )
+            
+        elif chart_type == "level_type_distribution":
+            # Simplified pie chart
+            counts = filtered_df['Contaminant Level Type'].value_counts()
+            
+            fig = go.Figure(data=[
+                go.Pie(
+                    labels=counts.index.tolist(),
+                    values=counts.values.tolist(),
+                    hole=0.3
+                )
+            ])
+            
+            fig.update_layout(
+                title='Distribution of Contaminant Level Types',
+                height=500
+            )
+            
+        elif chart_type == "heatmap":
+            # Simplified heatmap
+            top_contaminants = filtered_df['Contaminant'].value_counts().nlargest(10).index.tolist()
+            top_commodities = filtered_df['Commodity'].value_counts().nlargest(10).index.tolist()
+            
+            # Create a simple matrix for the heatmap
+            matrix = np.zeros((len(top_contaminants), len(top_commodities)))
+            
+            # Fill in the matrix
+            for i, contaminant in enumerate(top_contaminants):
+                for j, commodity in enumerate(top_commodities):
+                    count = len(filtered_df[(filtered_df['Contaminant'] == contaminant) & 
+                                           (filtered_df['Commodity'] == commodity)])
+                    matrix[i, j] = count
+            
+            fig = go.Figure(data=go.Heatmap(
+                z=matrix,
+                x=top_commodities,
+                y=top_contaminants,
+                colorscale='Viridis'
+            ))
+            
+            fig.update_layout(
+                title='Heatmap of Top Contaminants vs Top Commodities',
+                xaxis=dict(title='Commodity', tickangle=-45),
+                yaxis=dict(title='Contaminant'),
+                height=600
+            )
+            
+        elif chart_type == "level_type_by_contaminant":
+            # Simplified stacked bar
+            top_contaminants = filtered_df['Contaminant'].value_counts().nlargest(10).index.tolist()
+            level_types = filtered_df['Contaminant Level Type'].unique().tolist()
+            
+            # Create a simple figure
+            fig = go.Figure()
+            
+            # Add a trace for each level type
+            for level_type in level_types:
+                y_values = []
+                for contaminant in top_contaminants:
+                    count = len(filtered_df[(filtered_df['Contaminant'] == contaminant) & 
+                                           (filtered_df['Contaminant Level Type'] == level_type)])
+                    y_values.append(count)
+                
+                fig.add_trace(go.Bar(
+                    name=level_type,
+                    x=top_contaminants,
+                    y=y_values
+                ))
+            
+            fig.update_layout(
+                title='Contaminant Level Types by Top 10 Contaminants',
+                xaxis=dict(title='Contaminant', tickangle=-45),
+                yaxis=dict(title='Count'),
+                barmode='stack',
+                height=500
+            )
         
-        fig = px.bar(contaminant_counts, 
-                     x='Contaminant', 
-                     y='Count',
-                     title='Top 15 Contaminants by Frequency',
-                     labels={'Count': 'Number of Entries', 'Contaminant': 'Contaminant'},
-                     color='Count',
-                     color_continuous_scale='blues')
-        
-        fig.update_layout(
-            xaxis_title='Contaminant',
-            yaxis_title='Count',
-            xaxis={'categoryorder':'total descending'},
-            margin=dict(l=40, r=40, t=50, b=40),
-            xaxis_tickangle=-45,
-            height=500
-        )
-        
-    elif chart_type == "commodity_distribution":
-        # Commodity distribution chart
-        commodity_counts = filtered_df['Commodity'].value_counts().reset_index()
-        commodity_counts.columns = ['Commodity', 'Count']
-        commodity_counts = commodity_counts.sort_values('Count', ascending=False).head(15)
-        
-        fig = px.bar(commodity_counts, 
-                     x='Commodity', 
-                     y='Count',
-                     title='Top 15 Commodities by Frequency',
-                     labels={'Count': 'Number of Entries', 'Commodity': 'Commodity'},
-                     color='Count',
-                     color_continuous_scale='greens')
-        
-        fig.update_layout(
-            xaxis_title='Commodity',
-            yaxis_title='Count',
-            xaxis={'categoryorder':'total descending'},
-            margin=dict(l=40, r=40, t=50, b=40),
-            xaxis_tickangle=-45,
-            height=500
-        )
-        
-    elif chart_type == "level_type_distribution":
-        # Level type distribution chart
-        level_type_counts = filtered_df['Contaminant Level Type'].value_counts().reset_index()
-        level_type_counts.columns = ['Level Type', 'Count']
-        
-        fig = px.pie(level_type_counts, 
-                     values='Count', 
-                     names='Level Type',
-                     title='Distribution of Contaminant Level Types',
-                     hole=0.3,
-                     color_discrete_sequence=px.colors.qualitative.Set3)
-        
-        fig.update_layout(
-            margin=dict(l=20, r=20, t=50, b=20),
-            height=500
-        )
-        
-    elif chart_type == "heatmap":
-        # Heatmap of top contaminants vs top commodities
-        top_contaminants = filtered_df['Contaminant'].value_counts().nlargest(10).index
-        top_commodities = filtered_df['Commodity'].value_counts().nlargest(10).index
-        
-        # Filter DataFrame to only include top contaminants and commodities
-        heatmap_df = filtered_df[filtered_df['Contaminant'].isin(top_contaminants) & 
-                                filtered_df['Commodity'].isin(top_commodities)]
-        
-        # Create a pivot table for the heatmap
-        pivot_df = pd.crosstab(heatmap_df['Contaminant'], heatmap_df['Commodity'])
-        
-        # Fill NaN values with 0
-        pivot_df = pivot_df.fillna(0)
-        
-        fig = px.imshow(pivot_df,
-                        labels=dict(x="Commodity", y="Contaminant", color="Count"),
-                        x=pivot_df.columns,
-                        y=pivot_df.index,
-                        title="Heatmap of Top Contaminants vs Top Commodities",
-                        color_continuous_scale="Viridis")
-        
-        fig.update_layout(
-            xaxis_tickangle=-45,
-            margin=dict(l=40, r=20, t=50, b=80),
-            height=600
-        )
-        
-    elif chart_type == "level_type_by_contaminant":
-        # Stacked bar chart of level types by top contaminants
-        top_contaminants = filtered_df['Contaminant'].value_counts().nlargest(10).index
-        stacked_df = filtered_df[filtered_df['Contaminant'].isin(top_contaminants)]
-        
-        # Create a pivot table
-        pivot_df = pd.crosstab(stacked_df['Contaminant'], stacked_df['Contaminant Level Type'])
-        
-        # Convert to long format for plotly
-        stacked_data = pivot_df.reset_index().melt(id_vars=['Contaminant'], 
-                                                  value_vars=pivot_df.columns,
-                                                  var_name='Level Type', 
-                                                  value_name='Count')
-        
-        fig = px.bar(stacked_data, 
-                     x='Contaminant', 
-                     y='Count', 
-                     color='Level Type',
-                     title='Contaminant Level Types by Top 10 Contaminants',
-                     labels={'Count': 'Number of Entries', 'Contaminant': 'Contaminant', 'Level Type': 'Level Type'},
-                     color_discrete_sequence=px.colors.qualitative.Bold)
-        
-        fig.update_layout(
-            xaxis_title='Contaminant',
-            yaxis_title='Count',
-            xaxis_tickangle=-45,
-            legend_title='Level Type',
-            margin=dict(l=40, r=20, t=50, b=80),
-            height=500
-        )
+        else:
+            # Default to simple bar chart if chart type not recognized
+            return create_simple_bar()
+            
+    except Exception as e:
+        print(f"Error creating visualization: {e}")
+        # If anything fails, return a simple bar chart
+        return create_simple_bar()
     
     return fig
 
@@ -431,7 +457,8 @@ def update_interface(contaminant, commodity, level_type, search_term, level_min,
 
 def clear_filters():
     """Reset all filters to their default values"""
-    return None, None, None, "", None, None, "contaminant_distribution", update_interface(None, None, None, "", None, None, "contaminant_distribution")
+    # Use empty lists for multi-select dropdowns instead of None
+    return [], [], [], "", None, None, "contaminant_distribution", update_interface([], [], [], "", None, None, "contaminant_distribution")
 
 # Build the Gradio interface
 with gr.Blocks(css=custom_css, title=page_title) as demo:
@@ -580,7 +607,7 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
     
     # Initialize with all data
     demo.load(
-        lambda: update_interface(None, None, None, "", None, None, "contaminant_distribution"),
+        lambda: update_interface([], [], [], "", None, None, "contaminant_distribution"),
         outputs=filter_outputs
     )
 
