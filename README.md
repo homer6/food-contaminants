@@ -22,6 +22,8 @@ This application provides a user-friendly interface to explore and visualize FDA
   - Python 3.x installed, or
   - Node.js installed
 
+This is a purely client-side application with no backend dependencies. Python or Node.js are only needed to run a local development server.
+
 ### Installation and Setup
 
 1. Clone this repository:
@@ -30,7 +32,9 @@ This application provides a user-friendly interface to explore and visualize FDA
    cd food-contaminants
    ```
 
-2. Start a local development server:
+2. **IMPORTANT**: This application **cannot** be run by directly opening the HTML file in a browser due to CORS security restrictions. You **must** use a local web server.
+
+3. Start a local development server:
 
    **Using Python:**
    ```bash
@@ -53,11 +57,13 @@ This application provides a user-friendly interface to explore and visualize FDA
    npx serve
    ```
 
-3. Open your browser and navigate to:
+4. Open your browser and navigate to:
    - Python server: http://localhost:8000
    - Node.js serve: http://localhost:3000 (default)
 
-4. Explore the data!
+5. Explore the data!
+
+> **Note**: If you see an error like `Failed to load resource: net::ERR_FAILED` or `Access to fetch has been blocked by CORS policy`, it means you're trying to open the HTML file directly without using a web server.
 
 ## Data Source
 
