@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Contaminants Explorer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Food Contaminants Data Explorer</h1>
+            <p>Explore FDA contaminant levels in various food commodities</p>
+        </header>
+        
+        <div class="search-filters">
+            <div class="filter-group">
+                <label for="contaminant-filter">Filter by Contaminant:</label>
+                <select id="contaminant-filter">
+                    <option value="">All Contaminants</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="commodity-filter">Filter by Commodity:</label>
+                <select id="commodity-filter">
+                    <option value="">All Commodities</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="level-type-filter">Filter by Level Type:</label>
+                <select id="level-type-filter">
+                    <option value="">All Level Types</option>
+                </select>
+            </div>
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search...">
+            </div>
+        </div>
+        
+        <div class="visualization-container">
+            <div id="chart-container"></div>
+        </div>
+        
+        <div class="data-table-container">
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>Contaminant</th>
+                        <th>Commodity</th>
+                        <th>Level Type</th>
+                        <th>Level</th>
+                        <th>Reference</th>
+                        <th>Learn More</th>
+                    </tr>
+                </thead>
+                <tbody id="data-tbody">
+                    <!-- Data will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <footer>
+            <p>Data source: FDA Food Contaminant Levels | <a href="https://github.com/homer6/food-contaminants">GitHub Repository</a></p>
+        </footer>
+    </div>
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
