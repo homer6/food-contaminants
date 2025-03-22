@@ -34,9 +34,23 @@ This is a purely client-side application with no backend dependencies. Python or
 
 2. **IMPORTANT**: This application **cannot** be run by directly opening the HTML file in a browser due to CORS security restrictions. You **must** use a local web server.
 
-3. Start a local development server:
+3. Set up a development environment:
 
-   **Using Python:**
+   **Using Python (recommended):**
+   
+   Create and activate a virtual environment:
+   ```bash
+   # Create a virtual environment
+   python -m venv venv
+   
+   # Activate the virtual environment
+   # On macOS/Linux:
+   source venv/bin/activate
+   # On Windows:
+   venv\Scripts\activate
+   ```
+   
+   Start the server:
    ```bash
    # Start server on default port 8000
    python -m http.server
