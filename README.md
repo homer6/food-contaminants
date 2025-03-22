@@ -83,11 +83,33 @@ Open your browser and navigate to http://localhost:8000
 
 ### Using the Application
 
-1. Use the dropdown filters to narrow down results by contaminant, commodity, or level type
-2. Use the search box to search across all fields
-3. Click "Clear All Filters" to reset the view
-4. Examine the bar chart visualization to see contaminant distribution
-5. When you're done, return to the terminal and press Ctrl+C to stop the server
+#### Enhanced Gradio Interface
+The Gradio application offers the following features:
+
+1. **Advanced Filtering**
+   - Dropdown filters showing item counts for each option
+   - Full-text search across all data fields
+   - Numeric filtering by minimum and maximum contaminant levels
+   - One-click filter reset button
+
+2. **Multiple Visualization Types**
+   - Contaminant Distribution: Bar chart of most frequent contaminants
+   - Commodity Distribution: Bar chart of most frequent food commodities
+   - Level Type Distribution: Pie chart showing level type breakdown
+   - Heatmap: Visualize relationships between contaminants and commodities
+   - Level Type by Contaminant: Stacked bars showing level types for top contaminants
+
+3. **Data Analysis Features**
+   - Summary statistics dashboard for filtered data
+   - Clean, paginated data table
+   - Record count indicators and warnings for large result sets
+
+4. **Interactive Experience**
+   - Real-time updates when changing filters or visualization types
+   - Responsive design that works on various screen sizes
+   - Professional styling with modern typography and layout
+
+When you're done, return to the terminal and press Ctrl+C to stop the server.
 
 > **Note**: If you see an error like `Failed to load resource: net::ERR_FAILED` or `Access to fetch has been blocked by CORS policy`, it means you're trying to open the HTML file directly without using a web server.
 
