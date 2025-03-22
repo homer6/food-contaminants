@@ -2,6 +2,8 @@
 
 An interactive web application for exploring FDA food contaminant data.
 
+![Food Contaminants Data Explorer Screenshot](images/screenshot-0001.png)
+
 ## Overview
 
 This application provides a user-friendly interface to explore and visualize FDA contaminant levels in various food commodities. Users can filter the data, search for specific information, and view visualizations to better understand the relationships within the data.
