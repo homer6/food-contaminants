@@ -124,7 +124,14 @@ df, last_modified_date = load_data()
 def get_filter_options(column):
     """Get sorted filter options with counts for a given column"""
     value_counts = df[column].value_counts().sort_index()
-    return [f"{value} ({count})" for value, count in value_counts.items()]
+    # For compatibility with different pandas/gradio versions
+    try:
+        # Newer pandas versions
+        items = value_counts.items()
+    except AttributeError:
+        # Older pandas versions
+        items = zip(value_counts.index, value_counts.values)
+    return [f"{value} ({count})" for value, count in items]
 
 # Extract the actual value from a filter option string like "Value (123)"
 def extract_value(option):
@@ -419,14 +426,15 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
     with gr.Row():
         # Left column - filters
         with gr.Column(scale=1):
-            with gr.Box(elem_classes=["filter-group"]):
+            with gr.Group(elem_classes=["filter-group"]):
                 gr.Markdown("### Data Filters")
                 
                 contaminant_dropdown = gr.Dropdown(
                     choices=contaminant_options,
                     label="Contaminant",
                     value=None,
-                    allow_custom_value=False,
+                    # Older versions don't have allow_custom_value
+                    # allow_custom_value=False,
                     elem_id="contaminant-filter"
                 )
                 
@@ -434,7 +442,8 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                     choices=commodity_options,
                     label="Commodity",
                     value=None,
-                    allow_custom_value=False,
+                    # Older versions don't have allow_custom_value
+                    # allow_custom_value=False,
                     elem_id="commodity-filter"
                 )
                 
@@ -442,7 +451,8 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                     choices=level_type_options,
                     label="Level Type",
                     value=None,
-                    allow_custom_value=False,
+                    # Older versions don't have allow_custom_value
+                    # allow_custom_value=False,
                     elem_id="level-type-filter"
                 )
                 
@@ -456,7 +466,7 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                     level_min = gr.Number(label="Min Level Value", value=None)
                     level_max = gr.Number(label="Max Level Value", value=None)
                 
-                clear_btn = gr.Button("Clear All Filters", variant="secondary")
+                clear_btn = gr.Button("Clear All Filters")  # Removed variant="secondary" for compatibility
             
             stats_html = gr.HTML(elem_classes=["data-card"])
         
@@ -472,16 +482,26 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                 ],
                 value="contaminant_distribution",
                 label="Visualization Type",
-                info="Select different visualization types to explore the data",
+                # Removed info parameter for compatibility
                 elem_id="chart-type",
                 elem_classes=["chart-selector"]
             )
+            
+            # Add explanation for chart types
+            gr.Markdown("""
+            **Chart Types:**
+            - **contaminant_distribution**: Bar chart of top contaminants
+            - **commodity_distribution**: Bar chart of top commodities
+            - **level_type_distribution**: Pie chart of level types
+            - **heatmap**: Heatmap of contaminants vs commodities
+            - **level_type_by_contaminant**: Stacked bars of level types
+            """)
             
             visualization = gr.Plot(elem_classes=["chart-container"])
             
             records_message = gr.Markdown(elem_classes=["records-message"])
             
-            with gr.Box(elem_classes=["data-card"]):
+            with gr.Group(elem_classes=["data-card"]):
                 gr.Markdown("### Data Table")
                 data_table = gr.DataFrame(
                     headers=[
