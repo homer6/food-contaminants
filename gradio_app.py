@@ -247,195 +247,175 @@ def calculate_stats(filtered_df):
     
     return stats_html
 
-# Create visualizations
-def create_visualizations(filtered_df, chart_type):
-    """Create different types of visualizations based on the filtered data"""
-    # Debug information
-    print(f"Creating visualization with {len(filtered_df)} rows of data")
-    print(f"Chart type: {chart_type}")
+# Visualization Functions - each one as a separate function
+def create_contaminant_bar(filtered_df):
+    """Create a bar chart of top contaminants"""
+    counts = filtered_df['Contaminant'].value_counts().nlargest(15)
     
-    # Force chart_type to be a string in case it's None or another type
-    if chart_type is None:
-        chart_type = "contaminant_distribution"
+    fig = go.Figure(data=[
+        go.Bar(
+            x=counts.index.tolist(),
+            y=counts.values.tolist(),
+            marker_color='rgb(55, 83, 109)'
+        )
+    ])
     
-    # Create a basic bar chart if something fails
-    def create_simple_bar():
-        try:
-            counts = filtered_df['Contaminant'].value_counts().nlargest(10)
-            fig = go.Figure(data=[
-                go.Bar(
-                    x=counts.index.tolist(),
-                    y=counts.values.tolist(),
-                    marker_color='rgb(55, 83, 109)'
-                )
-            ])
-            fig.update_layout(
-                title='Top 10 Contaminants',
-                xaxis=dict(title='Contaminant'),
-                yaxis=dict(title='Count'),
-                height=500
-            )
-            return fig
-        except Exception as e:
-            print(f"Error in create_simple_bar: {e}")
-            # Create an empty figure with error message
-            fig = go.Figure()
-            fig.add_annotation(text="Error creating visualization",
-                              xref="paper", yref="paper",
-                              x=0.5, y=0.5, showarrow=False,
-                              font=dict(size=16))
-            fig.update_layout(height=400)
-            return fig
+    fig.update_layout(
+        title='Top 15 Contaminants by Frequency',
+        xaxis=dict(title='Contaminant', tickangle=-45),
+        yaxis=dict(title='Count'),
+        height=500
+    )
+    return fig
+
+def create_commodity_bar(filtered_df):
+    """Create a bar chart of top commodities"""
+    counts = filtered_df['Commodity'].value_counts().nlargest(15)
     
-    # If no data, return empty figure with message
+    fig = go.Figure(data=[
+        go.Bar(
+            x=counts.index.tolist(),
+            y=counts.values.tolist(),
+            marker_color='rgb(67, 160, 71)'
+        )
+    ])
+    
+    fig.update_layout(
+        title='Top 15 Commodities by Frequency',
+        xaxis=dict(title='Commodity', tickangle=-45),
+        yaxis=dict(title='Count'),
+        height=500
+    )
+    return fig
+
+def create_level_type_pie(filtered_df):
+    """Create a pie chart of level types"""
+    counts = filtered_df['Contaminant Level Type'].value_counts()
+    
+    fig = go.Figure(data=[
+        go.Pie(
+            labels=counts.index.tolist(),
+            values=counts.values.tolist(),
+            hole=0.3
+        )
+    ])
+    
+    fig.update_layout(
+        title='Distribution of Contaminant Level Types',
+        height=500
+    )
+    return fig
+
+def create_heatmap(filtered_df):
+    """Create a heatmap of contaminants vs commodities"""
+    top_contaminants = filtered_df['Contaminant'].value_counts().nlargest(10).index.tolist()
+    top_commodities = filtered_df['Commodity'].value_counts().nlargest(10).index.tolist()
+    
+    # Create a simple matrix for the heatmap
+    matrix = np.zeros((len(top_contaminants), len(top_commodities)))
+    
+    # Fill in the matrix
+    for i, contaminant in enumerate(top_contaminants):
+        for j, commodity in enumerate(top_commodities):
+            count = len(filtered_df[(filtered_df['Contaminant'] == contaminant) & 
+                                   (filtered_df['Commodity'] == commodity)])
+            matrix[i, j] = count
+    
+    fig = go.Figure(data=go.Heatmap(
+        z=matrix,
+        x=top_commodities,
+        y=top_contaminants,
+        colorscale='Viridis'
+    ))
+    
+    fig.update_layout(
+        title='Heatmap of Top Contaminants vs Top Commodities',
+        xaxis=dict(title='Commodity', tickangle=-45),
+        yaxis=dict(title='Contaminant'),
+        height=600
+    )
+    return fig
+
+def create_stacked_bar(filtered_df):
+    """Create a stacked bar chart of level types by contaminant"""
+    top_contaminants = filtered_df['Contaminant'].value_counts().nlargest(10).index.tolist()
+    level_types = filtered_df['Contaminant Level Type'].unique().tolist()
+    
+    # Create a simple figure
+    fig = go.Figure()
+    
+    # Add a trace for each level type
+    for level_type in level_types:
+        y_values = []
+        for contaminant in top_contaminants:
+            count = len(filtered_df[(filtered_df['Contaminant'] == contaminant) & 
+                                   (filtered_df['Contaminant Level Type'] == level_type)])
+            y_values.append(count)
+        
+        fig.add_trace(go.Bar(
+            name=level_type,
+            x=top_contaminants,
+            y=y_values
+        ))
+    
+    fig.update_layout(
+        title='Contaminant Level Types by Top 10 Contaminants',
+        xaxis=dict(title='Contaminant', tickangle=-45),
+        yaxis=dict(title='Count'),
+        barmode='stack',
+        height=500
+    )
+    return fig
+
+def create_empty_figure(message="No data available for visualization"):
+    """Create an empty figure with an error message"""
+    fig = go.Figure()
+    fig.add_annotation(
+        text=message,
+        xref="paper", yref="paper",
+        x=0.5, y=0.5, showarrow=False,
+        font=dict(size=16)
+    )
+    fig.update_layout(height=400)
+    return fig
+
+# Main visualization function
+def create_visualization(filtered_df, chart_type):
+    """Create a visualization based on the selected chart type"""
+    # Handle empty data
     if filtered_df.empty:
-        fig = go.Figure()
-        fig.add_annotation(text="No data available for visualization",
-                          xref="paper", yref="paper",
-                          x=0.5, y=0.5, showarrow=False,
-                          font=dict(size=16))
-        fig.update_layout(height=400)
-        return fig
-    
-    # Use try-except to catch any issues
+        return create_empty_figure()
+
+    # Use try block to catch any errors
     try:
         if chart_type == "contaminant_distribution":
-            # Simplified contaminant distribution chart using go.Figure
-            counts = filtered_df['Contaminant'].value_counts().nlargest(15)
-            
-            fig = go.Figure(data=[
-                go.Bar(
-                    x=counts.index.tolist(),
-                    y=counts.values.tolist(),
-                    marker_color='rgb(55, 83, 109)'
-                )
-            ])
-            
-            fig.update_layout(
-                title='Top 15 Contaminants by Frequency',
-                xaxis=dict(title='Contaminant', tickangle=-45),
-                yaxis=dict(title='Count'),
-                height=500
-            )
-            
+            return create_contaminant_bar(filtered_df)
         elif chart_type == "commodity_distribution":
-            # Simplified commodity distribution chart
-            counts = filtered_df['Commodity'].value_counts().nlargest(15)
-            
-            fig = go.Figure(data=[
-                go.Bar(
-                    x=counts.index.tolist(),
-                    y=counts.values.tolist(),
-                    marker_color='rgb(67, 160, 71)'
-                )
-            ])
-            
-            fig.update_layout(
-                title='Top 15 Commodities by Frequency',
-                xaxis=dict(title='Commodity', tickangle=-45),
-                yaxis=dict(title='Count'),
-                height=500
-            )
-            
+            return create_commodity_bar(filtered_df)
         elif chart_type == "level_type_distribution":
-            # Simplified pie chart
-            counts = filtered_df['Contaminant Level Type'].value_counts()
-            
-            fig = go.Figure(data=[
-                go.Pie(
-                    labels=counts.index.tolist(),
-                    values=counts.values.tolist(),
-                    hole=0.3
-                )
-            ])
-            
-            fig.update_layout(
-                title='Distribution of Contaminant Level Types',
-                height=500
-            )
-            
+            return create_level_type_pie(filtered_df)
         elif chart_type == "heatmap":
-            # Simplified heatmap
-            top_contaminants = filtered_df['Contaminant'].value_counts().nlargest(10).index.tolist()
-            top_commodities = filtered_df['Commodity'].value_counts().nlargest(10).index.tolist()
-            
-            # Create a simple matrix for the heatmap
-            matrix = np.zeros((len(top_contaminants), len(top_commodities)))
-            
-            # Fill in the matrix
-            for i, contaminant in enumerate(top_contaminants):
-                for j, commodity in enumerate(top_commodities):
-                    count = len(filtered_df[(filtered_df['Contaminant'] == contaminant) & 
-                                           (filtered_df['Commodity'] == commodity)])
-                    matrix[i, j] = count
-            
-            fig = go.Figure(data=go.Heatmap(
-                z=matrix,
-                x=top_commodities,
-                y=top_contaminants,
-                colorscale='Viridis'
-            ))
-            
-            fig.update_layout(
-                title='Heatmap of Top Contaminants vs Top Commodities',
-                xaxis=dict(title='Commodity', tickangle=-45),
-                yaxis=dict(title='Contaminant'),
-                height=600
-            )
-            
+            return create_heatmap(filtered_df)
         elif chart_type == "level_type_by_contaminant":
-            # Simplified stacked bar
-            top_contaminants = filtered_df['Contaminant'].value_counts().nlargest(10).index.tolist()
-            level_types = filtered_df['Contaminant Level Type'].unique().tolist()
-            
-            # Create a simple figure
-            fig = go.Figure()
-            
-            # Add a trace for each level type
-            for level_type in level_types:
-                y_values = []
-                for contaminant in top_contaminants:
-                    count = len(filtered_df[(filtered_df['Contaminant'] == contaminant) & 
-                                           (filtered_df['Contaminant Level Type'] == level_type)])
-                    y_values.append(count)
-                
-                fig.add_trace(go.Bar(
-                    name=level_type,
-                    x=top_contaminants,
-                    y=y_values
-                ))
-            
-            fig.update_layout(
-                title='Contaminant Level Types by Top 10 Contaminants',
-                xaxis=dict(title='Contaminant', tickangle=-45),
-                yaxis=dict(title='Count'),
-                barmode='stack',
-                height=500
-            )
-        
+            return create_stacked_bar(filtered_df)
         else:
-            # Default to simple bar chart if chart type not recognized
-            return create_simple_bar()
-            
+            # Default to contaminant bar
+            return create_contaminant_bar(filtered_df)
     except Exception as e:
         print(f"Error creating visualization: {e}")
-        # If anything fails, return a simple bar chart
-        return create_simple_bar()
-    
-    return fig
+        return create_empty_figure(f"Error creating visualization: {str(e)}")
 
 # Main interface update function
 def update_interface(contaminant, commodity, level_type, search_term, level_min, level_max, chart_type):
     """Update the interface based on filters and chart type"""
+    # Filter the data
     filtered_df = filter_data(contaminant, commodity, level_type, search_term, level_min, level_max)
     
     # Calculate stats
     stats_html = calculate_stats(filtered_df)
     
     # Create visualization
-    print(f"Creating visualization with chart type: {chart_type} and {len(filtered_df)} rows")
-    fig = create_visualizations(filtered_df, chart_type)
-    print(f"Visualization created successfully: {fig is not None}")
+    fig = create_visualization(filtered_df, chart_type)
     
     # Prepare the table data
     if filtered_df.empty:
@@ -475,7 +455,15 @@ def update_interface(contaminant, commodity, level_type, search_term, level_min,
 def clear_filters():
     """Reset all filters to their default values"""
     # Use empty lists for multi-select dropdowns instead of None
-    return [], [], [], "", None, None, "contaminant_distribution", update_interface([], [], [], "", None, None, "contaminant_distribution")
+    empty_filter_result = update_interface([], [], [], "", None, None, "contaminant_distribution")
+    return [], [], [], "", None, None, "contaminant_distribution", empty_filter_result
+
+# Direct chart update function - bypasses the filters
+def update_chart_only(chart_type, contaminant, commodity, level_type, search_term, level_min, level_max):
+    """Update only the chart based on the selected chart type"""
+    filtered_df = filter_data(contaminant, commodity, level_type, search_term, level_min, level_max)
+    fig = create_visualization(filtered_df, chart_type)
+    return fig
 
 # Build the Gradio interface
 with gr.Blocks(css=custom_css, title=page_title) as demo:
@@ -497,30 +485,24 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                 contaminant_dropdown = gr.Dropdown(
                     choices=contaminant_options,
                     label="Contaminant",
-                    value=None,
+                    value=[],
                     multiselect=True,  # Allow selecting multiple contaminants
-                    # Older versions don't have allow_custom_value
-                    # allow_custom_value=False,
                     elem_id="contaminant-filter"
                 )
                 
                 commodity_dropdown = gr.Dropdown(
                     choices=commodity_options,
                     label="Commodity",
-                    value=None,
+                    value=[],
                     multiselect=True,  # Allow selecting multiple commodities
-                    # Older versions don't have allow_custom_value
-                    # allow_custom_value=False,
                     elem_id="commodity-filter"
                 )
                 
                 level_type_dropdown = gr.Dropdown(
                     choices=level_type_options,
                     label="Level Type",
-                    value=None,
+                    value=[],
                     multiselect=True,  # Allow selecting multiple level types
-                    # Older versions don't have allow_custom_value
-                    # allow_custom_value=False,
                     elem_id="level-type-filter"
                 )
                 
@@ -534,12 +516,13 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                     level_min = gr.Number(label="Min Level Value", value=None)
                     level_max = gr.Number(label="Max Level Value", value=None)
                 
-                clear_btn = gr.Button("Clear All Filters")  # Removed variant="secondary" for compatibility
+                clear_btn = gr.Button("Clear All Filters")
             
             stats_html = gr.HTML(elem_classes=["data-card"])
         
         # Right column - visualizations and data
         with gr.Column(scale=2):
+            # Use Radio buttons for chart type
             chart_type = gr.Radio(
                 choices=[
                     "contaminant_distribution",
@@ -556,12 +539,10 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                     "Level Type by Contaminant (Stacked Bars)"
                 ],
                 value="contaminant_distribution",
-                label="Visualization Type",
-                # Removed info parameter for compatibility
-                elem_id="chart-type",
-                elem_classes=["chart-selector"]
+                label="Visualization Type"
             )
             
+            # Visualization plot
             visualization = gr.Plot(elem_classes=["chart-container"])
             
             records_message = gr.Markdown(elem_classes=["records-message"])
@@ -590,17 +571,17 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
     </div>
     """)
     
-    # Set up event handlers
+    # Filter inputs for event handlers
     filter_inputs = [
         contaminant_dropdown, 
         commodity_dropdown, 
         level_type_dropdown, 
         search_input, 
         level_min, 
-        level_max,
-        chart_type
+        level_max
     ]
     
+    # Outputs for the update_interface function
     filter_outputs = [
         stats_html,
         visualization, 
@@ -608,42 +589,35 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
         records_message
     ]
     
-    # Update interface when any filter changes
-    for input_component in filter_inputs:
-        if input_component == chart_type:
-            # Specifically handle chart_type changes with a click event
-            input_component.change(
-                update_interface,
-                inputs=filter_inputs,
-                outputs=filter_outputs,
-                api_name=False  # Ensure the event is processed immediately
-            )
-        else:
-            input_component.change(
-                update_interface,
-                inputs=filter_inputs,
-                outputs=filter_outputs
-            )
+    # Handle filter changes
+    def on_filter_change(*args):
+        active_chart_type = args[-1]  # Last argument is chart_type
+        filter_values = args[:-1]  # All other arguments are filter values
+        return update_interface(*filter_values, active_chart_type)
     
-    # Set up clear button
+    # Set up change events for filters
+    for input_component in filter_inputs:
+        input_component.change(
+            on_filter_change,
+            inputs=filter_inputs + [chart_type],
+            outputs=filter_outputs
+        )
+    
+    # IMPORTANT: Special handler for chart type changes
+    chart_type.change(
+        # When chart type changes, we need to redraw the visualization with the existing filters
+        update_chart_only,
+        inputs=[chart_type] + filter_inputs,
+        outputs=visualization
+    )
+    
+    # Clear button handler
     clear_btn.click(
         clear_filters,
-        outputs=filter_inputs + filter_outputs
+        outputs=filter_inputs + [chart_type] + filter_outputs
     )
     
-    # Add a specific click handler for chart type radio buttons
-    # Define a specific function to handle chart type changes
-    def handle_chart_type_change(contaminant, commodity, level_type, search_term, level_min, level_max, new_chart_type):
-        print(f"Chart type changed to: {new_chart_type}")
-        return update_interface(contaminant, commodity, level_type, search_term, level_min, level_max, new_chart_type)
-    
-    chart_type.select(
-        handle_chart_type_change,
-        inputs=filter_inputs,
-        outputs=filter_outputs
-    )
-    
-    # Initialize with all data
+    # Initialize the interface with default values
     demo.load(
         lambda: update_interface([], [], [], "", None, None, "contaminant_distribution"),
         outputs=filter_outputs
