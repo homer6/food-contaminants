@@ -254,23 +254,38 @@ def create_visualizations(filtered_df, chart_type):
     print(f"Creating visualization with {len(filtered_df)} rows of data")
     print(f"Chart type: {chart_type}")
     
+    # Force chart_type to be a string in case it's None or another type
+    if chart_type is None:
+        chart_type = "contaminant_distribution"
+    
     # Create a basic bar chart if something fails
     def create_simple_bar():
-        counts = filtered_df['Contaminant'].value_counts().nlargest(10)
-        fig = go.Figure(data=[
-            go.Bar(
-                x=counts.index.tolist(),
-                y=counts.values.tolist(),
-                marker_color='rgb(55, 83, 109)'
+        try:
+            counts = filtered_df['Contaminant'].value_counts().nlargest(10)
+            fig = go.Figure(data=[
+                go.Bar(
+                    x=counts.index.tolist(),
+                    y=counts.values.tolist(),
+                    marker_color='rgb(55, 83, 109)'
+                )
+            ])
+            fig.update_layout(
+                title='Top 10 Contaminants',
+                xaxis=dict(title='Contaminant'),
+                yaxis=dict(title='Count'),
+                height=500
             )
-        ])
-        fig.update_layout(
-            title='Top 10 Contaminants',
-            xaxis=dict(title='Contaminant'),
-            yaxis=dict(title='Count'),
-            height=500
-        )
-        return fig
+            return fig
+        except Exception as e:
+            print(f"Error in create_simple_bar: {e}")
+            # Create an empty figure with error message
+            fig = go.Figure()
+            fig.add_annotation(text="Error creating visualization",
+                              xref="paper", yref="paper",
+                              x=0.5, y=0.5, showarrow=False,
+                              font=dict(size=16))
+            fig.update_layout(height=400)
+            return fig
     
     # If no data, return empty figure with message
     if filtered_df.empty:
@@ -418,7 +433,9 @@ def update_interface(contaminant, commodity, level_type, search_term, level_min,
     stats_html = calculate_stats(filtered_df)
     
     # Create visualization
+    print(f"Creating visualization with chart type: {chart_type} and {len(filtered_df)} rows")
     fig = create_visualizations(filtered_df, chart_type)
+    print(f"Visualization created successfully: {fig is not None}")
     
     # Prepare the table data
     if filtered_df.empty:
@@ -593,16 +610,37 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
     
     # Update interface when any filter changes
     for input_component in filter_inputs:
-        input_component.change(
-            update_interface,
-            inputs=filter_inputs,
-            outputs=filter_outputs
-        )
+        if input_component == chart_type:
+            # Specifically handle chart_type changes with a click event
+            input_component.change(
+                update_interface,
+                inputs=filter_inputs,
+                outputs=filter_outputs,
+                api_name=False  # Ensure the event is processed immediately
+            )
+        else:
+            input_component.change(
+                update_interface,
+                inputs=filter_inputs,
+                outputs=filter_outputs
+            )
     
     # Set up clear button
     clear_btn.click(
         clear_filters,
         outputs=filter_inputs + filter_outputs
+    )
+    
+    # Add a specific click handler for chart type radio buttons
+    # Define a specific function to handle chart type changes
+    def handle_chart_type_change(contaminant, commodity, level_type, search_term, level_min, level_max, new_chart_type):
+        print(f"Chart type changed to: {new_chart_type}")
+        return update_interface(contaminant, commodity, level_type, search_term, level_min, level_max, new_chart_type)
+    
+    chart_type.select(
+        handle_chart_type_change,
+        inputs=filter_inputs,
+        outputs=filter_outputs
     )
     
     # Initialize with all data
