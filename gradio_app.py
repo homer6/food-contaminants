@@ -137,8 +137,7 @@ with gr.Blocks(title="Food Contaminants Data Explorer", theme=gr.themes.Soft()) 
     
     # Initialize with all data
     demo.load(
-        update_table_and_chart,
-        inputs=[None, None, None, ""],
+        lambda: update_table_and_chart(None, None, None, ""),
         outputs=[output_table, chart]
     )
 
