@@ -35,6 +35,15 @@ pip install -r requirements.txt
 python gradio_app.py
 ```
 
+#### Python 3.13+ Compatibility Note:
+If you're using Python 3.13 or newer, you may encounter a "No module named 'distutils'" error. This is because distutils was removed from the standard library in Python 3.13. To fix this:
+
+1. Make sure setuptools is installed (included in requirements.txt)
+2. If still having issues, try installing setuptools explicitly:
+   ```bash
+   pip install setuptools
+   ```
+
 ### To serve the traditional web application:
 ```bash
 python -m http.server
