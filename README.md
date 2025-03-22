@@ -87,7 +87,8 @@ Open your browser and navigate to http://localhost:8000
 The Gradio application offers the following features:
 
 1. **Advanced Filtering**
-   - Dropdown filters showing item counts for each option
+   - **Multi-select dropdowns**: Select multiple contaminants, commodities, or level types at once
+   - Dropdown filters showing item counts for each option (e.g., "Lead (42)")
    - Full-text search across all data fields
    - Numeric filtering by minimum and maximum contaminant levels
    - One-click filter reset button

@@ -51,17 +51,33 @@ python -m http.server
 npx serve
 ```
 
+## Application Features
+
+### Enhanced Filtering in Gradio App
+- **Multi-select Filters**: Select multiple contaminants, commodities, or level types
+- **Live Updates**: Visualizations and data tables update automatically when filters change
+- **Numeric Filtering**: Filter by minimum and maximum contaminant levels
+- **Search**: Search across all data fields
+
+### Visualizations
+The Gradio application now includes multiple visualization types:
+1. **Top Contaminants**: Bar chart showing the most frequent contaminants
+2. **Top Commodities**: Bar chart showing the most frequent food commodities
+3. **Level Type Distribution**: Pie chart showing the distribution of level types
+4. **Contaminant-Commodity Heatmap**: Heat map showing relationships between top contaminants and commodities
+5. **Level Type by Contaminant**: Stacked bar chart showing level types for top contaminants
+
 ## Future Enhancements
 
 Potential improvements to consider:
-1. Add more advanced visualizations (heatmaps, scatter plots, time series)
+1. Add more advanced visualizations (scatter plots, time series)
 2. Implement data export functionality (CSV, JSON)
 3. Add statistical analysis features
 4. Improve mobile responsiveness
 5. Add unit tests
-6. Enhance the Gradio interface with additional filter types
-7. Add comparison views between different contaminants
-8. Implement geographic visualization if location data becomes available
+6. Add comparison views for specific contaminant pairs
+7. Implement geographic visualization if location data becomes available 
+8. Add trend analysis over time if temporal data becomes available
 
 ## Maintenance
 

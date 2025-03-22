@@ -151,16 +151,37 @@ def filter_data(contaminant, commodity, level_type, search_term, level_min, leve
     
     # Apply dropdown filters (extract actual values from the display strings)
     if contaminant:
-        contaminant_value = extract_value(contaminant)
-        filtered_df = filtered_df[filtered_df['Contaminant'] == contaminant_value]
+        # Handle single item or list of items
+        if isinstance(contaminant, list):
+            # Multiple contaminants selected
+            contaminant_values = [extract_value(c) for c in contaminant]
+            filtered_df = filtered_df[filtered_df['Contaminant'].isin(contaminant_values)]
+        else:
+            # Single contaminant selected
+            contaminant_value = extract_value(contaminant)
+            filtered_df = filtered_df[filtered_df['Contaminant'] == contaminant_value]
     
     if commodity:
-        commodity_value = extract_value(commodity)
-        filtered_df = filtered_df[filtered_df['Commodity'] == commodity_value]
+        # Handle single item or list of items
+        if isinstance(commodity, list):
+            # Multiple commodities selected
+            commodity_values = [extract_value(c) for c in commodity]
+            filtered_df = filtered_df[filtered_df['Commodity'].isin(commodity_values)]
+        else:
+            # Single commodity selected
+            commodity_value = extract_value(commodity)
+            filtered_df = filtered_df[filtered_df['Commodity'] == commodity_value]
     
     if level_type:
-        level_type_value = extract_value(level_type)
-        filtered_df = filtered_df[filtered_df['Contaminant Level Type'] == level_type_value]
+        # Handle single item or list of items
+        if isinstance(level_type, list):
+            # Multiple level types selected
+            level_type_values = [extract_value(lt) for lt in level_type]
+            filtered_df = filtered_df[filtered_df['Contaminant Level Type'].isin(level_type_values)]
+        else:
+            # Single level type selected
+            level_type_value = extract_value(level_type)
+            filtered_df = filtered_df[filtered_df['Contaminant Level Type'] == level_type_value]
     
     # Apply search term across all columns
     if search_term:
@@ -433,6 +454,7 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                     choices=contaminant_options,
                     label="Contaminant",
                     value=None,
+                    multiselect=True,  # Allow selecting multiple contaminants
                     # Older versions don't have allow_custom_value
                     # allow_custom_value=False,
                     elem_id="contaminant-filter"
@@ -442,6 +464,7 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                     choices=commodity_options,
                     label="Commodity",
                     value=None,
+                    multiselect=True,  # Allow selecting multiple commodities
                     # Older versions don't have allow_custom_value
                     # allow_custom_value=False,
                     elem_id="commodity-filter"
@@ -451,6 +474,7 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                     choices=level_type_options,
                     label="Level Type",
                     value=None,
+                    multiselect=True,  # Allow selecting multiple level types
                     # Older versions don't have allow_custom_value
                     # allow_custom_value=False,
                     elem_id="level-type-filter"
@@ -480,22 +504,19 @@ with gr.Blocks(css=custom_css, title=page_title) as demo:
                     "heatmap",
                     "level_type_by_contaminant"
                 ],
+                labels=[
+                    "Top Contaminants (Bar Chart)",
+                    "Top Commodities (Bar Chart)", 
+                    "Level Type Distribution (Pie Chart)",
+                    "Contaminant-Commodity Relationship (Heatmap)",
+                    "Level Type by Contaminant (Stacked Bars)"
+                ],
                 value="contaminant_distribution",
                 label="Visualization Type",
                 # Removed info parameter for compatibility
                 elem_id="chart-type",
                 elem_classes=["chart-selector"]
             )
-            
-            # Add explanation for chart types
-            gr.Markdown("""
-            **Chart Types:**
-            - **contaminant_distribution**: Bar chart of top contaminants
-            - **commodity_distribution**: Bar chart of top commodities
-            - **level_type_distribution**: Pie chart of level types
-            - **heatmap**: Heatmap of contaminants vs commodities
-            - **level_type_by_contaminant**: Stacked bars of level types
-            """)
             
             visualization = gr.Plot(elem_classes=["chart-container"])
             
